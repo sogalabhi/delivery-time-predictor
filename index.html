@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swiggy ETA Predictor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        swiggy: '#FC8019',
+                        lightyellow: '#FFF9D2',
+                        lightorange: '#FFEBCC',
+                        lightblue: '#BFDDF0',
+                        accent: '#8CC0DE'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-lightblue min-h-screen flex items-center justify-center p-6 font-sans text-gray-800">
+
+    <div class="bg-lightyellow w-full max-w-3xl rounded-2xl shadow-xl border border-lightorange overflow-hidden">
+        
+        <div class="bg-swiggy p-6 text-center">
+            <h1 class="text-3xl font-bold text-white tracking-wide flex items-center justify-center gap-3">
+                Intelligent ETA Predictor
+            </h1>
+        </div>
+
+        <div class="p-8">
+            <form id="etaForm" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="flex flex-col">
+                        <label class="font-semibold mb-1 text-sm">Driver Age</label>
+                        <input type="number" id="driver_age" value="30" min="18" max="65" class="p-3 rounded-lg border focus:ring-2 focus:ring-swiggy outline-none bg-white">
+                    </div>
+
+                    <div class="flex flex-col">
+                        <label class="font-semibold mb-1 text-sm">Driver Rating (1.0 - 5.0)</label>
+                        <input type="number" id="driver_rating" value="4.5" step="0.1" min="1.0" max="5.0" class="p-3 rounded-lg border focus:ring-2 focus:ring-swiggy outline-none bg-white">
+                    </div>
+
+                    <div class="flex flex-col">
+                        <label class="font-semibold mb-1 text-sm">Distance (km)</label>
+                        <input type="number" id="distance_km" value="12.5" step="0.1" class="p-3 rounded-lg border focus:ring-2 focus:ring-swiggy outline-none bg-white">
+                    </div>
+
+                    <div class="flex flex-col">
+                        <label class="font-semibold mb-1 text-sm">Weather Conditions</label>
+                        <select id="weather" class="p-3 rounded-lg border focus:ring-2 focus:ring-swiggy outline-none bg-white">
+                            <option value="Sunny">Sunny</option>
+                            <option value="Cloudy">Cloudy</option>
+                            <option value="Fog">Fog</option>
+                            <option value="Windy">Windy</option>
+                            <option value="Stormy">Stormy</option>
+                            <option value="Sandstorms">Sandstorms</option>
+                        </select>
+                    </div>
+
+                    <div class="flex flex-col">
+                        <label class="font-semibold mb-1 text-sm">Traffic Density</label>
+                        <select id="traffic" class="p-3 rounded-lg border focus:ring-2 focus:ring-swiggy outline-none bg-white">
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High" selected>High</option>
+                            <option value="Jam">Jam</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex flex-col">
+                        <label class="font-semibold mb-1 text-sm">Vehicle Type</label>
+                        <select id="vehicle_type" class="p-3 rounded-lg border focus:ring-2 focus:ring-swiggy outline-none bg-white">
+                            <option value="motorcycle">Motorcycle</option>
+                            <option value="scooter">Scooter</option>
+                            <option value="electric_scooter">Electric Scooter</option>
+                            <option value="bicycle">Bicycle</option>
+                        </select>
+                    </div>
+
+                    <div class="flex flex-col">
+                        <label class="font-semibold mb-1 text-sm">Festival Day?</label>
+                        <select id="festival" class="p-3 rounded-lg border focus:ring-2 focus:ring-swiggy outline-none bg-white">
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                        </select>
+                    </div>
+
+                    <div class="flex flex-col">
+                        <label class="font-semibold mb-1 text-sm">City Type</label>
+                        <select id="city_type" class="p-3 rounded-lg border focus:ring-2 focus:ring-swiggy outline-none bg-white">
+                            <option value="Urban">Urban</option>
+                            <option value="Metropolitian">Metropolitan</option>
+                            <option value="Semi-Urban">Semi-Urban</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="w-full bg-swiggy text-white font-bold text-lg py-4 rounded-xl shadow-lg hover:bg-orange-600 transition-all transform active:scale-95">
+                    Calculate Live ETA
+                </button>
+            </form>
+
+            <div id="results" class="hidden mt-8 p-6 bg-lightorange rounded-xl border-2 border-swiggy shadow-inner">
+                <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Prediction Results</h2>
+                
+                <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="bg-white p-4 rounded-lg w-full text-center shadow">
+                        <p class="text-sm text-gray-500 font-semibold mt-1">Kitchen Prep</p>
+                        <p class="text-2xl font-bold text-swiggy" id="res_prep">-- min</p>
+                    </div>
+                    
+                    <div class="text-3xl font-bold text-gray-400">+</div>
+
+                    <div class="bg-white p-4 rounded-lg w-full text-center shadow">
+                        <p class="text-sm text-gray-500 font-semibold mt-1">Travel Time</p>
+                        <p class="text-2xl font-bold text-swiggy" id="res_travel">-- min</p>
+                    </div>
+
+                    <div class="text-3xl font-bold text-gray-400">=</div>
+
+                    <div class="bg-swiggy p-4 rounded-lg w-full text-center shadow text-white transform scale-105">
+                        <p class="text-sm font-semibold mt-1 opacity-90">Total ETA</p>
+                        <p class="text-3xl font-bold" id="res_total">-- min</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="errorBanner" class="hidden mt-6 bg-red-100 text-red-700 p-4 rounded-lg text-center font-semibold border border-red-300">
+                Failed to connect to the API. Is your FastAPI server running?
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('etaForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const btn = document.getElementById('submitBtn');
+            const resultsDiv = document.getElementById('results');
+            const errorBanner = document.getElementById('errorBanner');
+            
+            btn.innerText = "Calculating...";
+            resultsDiv.classList.add('hidden');
+            errorBanner.classList.add('hidden');
+
+            const payload = {
+                driver_age: parseInt(document.getElementById('driver_age').value),
+                driver_rating: parseFloat(document.getElementById('driver_rating').value),
+                distance_km: parseFloat(document.getElementById('distance_km').value),
+                weather: document.getElementById('weather').value,
+                traffic: document.getElementById('traffic').value,
+                vehicle_type: document.getElementById('vehicle_type').value,
+                festival: document.getElementById('festival').value,
+                city_type: document.getElementById('city_type').value
+            };
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error("API Response Error");
+
+                const data = await response.json();
+
+                if(data.status === "success") {
+                    document.getElementById('res_prep').innerText = data.eta_breakdown.prep_time_minutes + " mins";
+                    document.getElementById('res_travel').innerText = data.eta_breakdown.travel_time_minutes + " mins";
+                    document.getElementById('res_total').innerText = Math.round(data.eta_breakdown.total_eta_minutes) + " mins";
+                    resultsDiv.classList.remove('hidden');
+                }
+
+            } catch (error) {
+                console.error("Error:", error);
+                errorBanner.classList.remove('hidden');
+            } finally {
+                btn.innerText = "Calculate Live ETA";
+            }
+        });
+    </script>
+
+</body>
+</html>

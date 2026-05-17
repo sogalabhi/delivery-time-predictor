@@ -1,10 +1,19 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import pandas as pd
 from tensorflow.keras.models import load_model
 import joblib
 
 app = FastAPI(title="Swiggy ETA Predictor API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 model = load_model('mimo_model.keras')
 scaler = joblib.load('scaler.pkl')
@@ -30,31 +39,24 @@ async def predict_eta(order: OrderRequest):
             input_df['Delivery_person_Ratings'] = float(order.driver_rating)
         if 'distance_km' in input_df.columns:
             input_df['distance_km'] = float(order.distance_km)
+
+        categories = [order.weather, order.traffic, order.vehicle_type, order.city_type]
             
-        weather_col = f"Weatherconditions_{order.weather}"
-        if weather_col in input_df.columns:
-            input_df[weather_col] = 1.0
-            
-        traffic_col = f"Road_traffic_density_{order.traffic}"
-        if traffic_col in input_df.columns:
-            input_df[traffic_col] = 1.0
-            
-        vehicle_col = f"Type_of_vehicle_{order.vehicle_type}"
-        if vehicle_col in input_df.columns:
-            input_df[vehicle_col] = 1.0
-            
-        if order.festival == "Yes" and "Festival_Yes" in input_df.columns:
-            input_df["Festival_Yes"] = 1.0
-            
-        city_col = f"City_{order.city_type}"
-        if city_col in input_df.columns:
-            input_df[city_col] = 1.0
+        if order.festival == "Yes":
+            categories.append("Festival_Yes")
+
+        for col in input_df.columns:
+            for cat in categories:
+                if cat.lower() in col.lower():
+                    input_df[col] = 1.0
 
         scaled_features = scaler.transform(input_df.values)
         predictions = model.predict(scaled_features)
         
         prep_time = max(0, float(predictions[0][0][0]))
         travel_time = max(0, float(predictions[1][0][0]))
+
+        print(f"Age: {order.driver_age} | Raw Prep: {prep_time} | Raw Travel: {travel_time}")
         
         return {
             "status": "success",
