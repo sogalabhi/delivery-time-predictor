@@ -2,6 +2,8 @@
 
 A full-stack Machine Learning application that predicts real-time food delivery ETAs. This project uses a **Multi-Input Multi-Output (MIMO) Neural Network** to simultaneously predict kitchen preparation time and rider travel time based on dynamic logistics parameters like weather, traffic density, and vehicle type.
 
+<img width="2102" height="1626" alt="image" src="https://github.com/user-attachments/assets/fb9304d9-e7c8-47e0-b842-56c145ce22c6" />
+
 ## 🛠️ Tech Stack
 *   **Machine Learning:** Python, TensorFlow / Keras, Scikit-Learn, Pandas
 *   **Backend:** FastAPI, Uvicorn, Pydantic, Joblib
